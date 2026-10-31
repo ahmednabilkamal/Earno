@@ -1,0 +1,116 @@
+import { Colors } from "@/constants/colors";
+import { Fonts } from "@/constants/fonts";
+import { StyleSheet } from "react-native";
+
+export default StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.appBg,
+  },
+  contentAbove: {
+    flex: 1,
+    zIndex: 1,
+    backgroundColor: "transparent",
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  emptyScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 50,
+    paddingHorizontal: 40,
+  },
+  illustrationContainer: {
+    width: 200,
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.CairoBold,
+    color: Colors.text.primary,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    fontFamily: Fonts.CairoRegular,
+    color: Colors.text.secondary,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 30,
+  },
+  exploreButton: {
+    backgroundColor: Colors.tagBg,
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 10,
+    width: "100%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exploreButtonText: {
+    fontSize: 16,
+    fontFamily: Fonts.CairoBold,
+    color: Colors.white,
+  },
+  header: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontFamily: Fonts.CairoSemiBold,
+    color: "#002347",
+    textAlign: "center",
+  },
+  searchContainer: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  searchBar: {
+    flexDirection: "row",
+    height: 50,
+    backgroundColor: Colors.white,
+    borderRadius: 25,
+    alignItems: "center",
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 5,
+    elevation: 1,
+    width: "100%",
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: Fonts.CairoRegular,
+    fontSize: 12,
+    color: Colors.inputPlaceholder,
+  },
+});

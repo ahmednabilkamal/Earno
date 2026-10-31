@@ -1,0 +1,114 @@
+{
+  "expo": {
+    "name": "EARNO",
+    "slug": "earno",
+    "version": "1.0.17",
+    "orientation": "portrait",
+    "icon": "./assets/images/ios-icon.png",
+    "scheme": "earno",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/images/ios-icon.png",
+      "bundleIdentifier": "com.afsc.earno",
+      "buildNumber": "40",
+      "associatedDomains": [
+        "applinks:earno.app",
+        "applinks:www.earno.app"
+      ],
+      "infoPlist": {
+        "CFBundleDisplayName": "Earno",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.afsc.earno",
+      "versionCode": 210,
+      "icon": "./assets/images/android-icon.png",
+      "adaptiveIcon": {
+        "backgroundColor": "#1E8BA2",
+        "foregroundImage": "./assets/images/android-adaptive-foreground.png"
+      },
+      "edgeToEdgeEnabled": false,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "earno.app",
+              "pathPrefix": "/p"
+            },
+            {
+              "scheme": "https",
+              "host": "www.earno.app",
+              "pathPrefix": "/p"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/white_logo.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/logo.png",
+          "color": "#002347",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ],
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo.png",
+          "imageWidth": 190,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "image": "./assets/images/logo.png",
+            "backgroundColor": "#ffffff"
+          }
+        }
+      ],
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Earno uses your photo library so you can add pictures to investment projects (for example, photos of a storefront or property) and attach images in chat. Only images you select are uploaded.",
+          "cameraPermission": "Earno uses the camera so you can take new photos for project listings (for example, documenting a location) and update your profile photo. Nothing is saved until you confirm."
+        }
+      ],
+      "expo-video"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1619d5ea-77cd-4483-9f77-4c45251cbc34"
+      }
+    },
+    "owner": "ds212"
+  }
+}

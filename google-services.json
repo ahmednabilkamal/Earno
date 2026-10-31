@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860817048227",
+    "project_id": "earno-d91ab",
+    "storage_bucket": "earno-d91ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860817048227:android:3c1d5d76f79b2d706f3516",
+        "android_client_info": {
+          "package_name": "com.afsc.earno"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAOatF4E1B-7Wlk9Z1Cha4F-DBuRo7LSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

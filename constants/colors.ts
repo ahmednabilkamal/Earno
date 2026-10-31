@@ -1,0 +1,50 @@
+export const Colors = {
+  primary: "#67A3B1",
+  secondary: "#1A2138",
+  background: "#FFFFFF",
+  surface: "#F5F5F5",
+  text: {
+    primary: "#1A2138",
+    secondary: "#666666",
+    light: "#999999",
+    inverse: "#FFFFFF",
+    social: "#111827",
+  },
+  border: "#E0E0E0",
+  divider: "#E0E0E0",
+  error: "#FF3B30",
+  success: "#34C759",
+  google: "#4285F4",
+  apple: "#000000",
+  placeholder: "#071835",
+  tagBg: "#4FA9B8",
+  inputPlaceholder: "#07183599",
+  white: "#FCFEFF",
+  red: "#F44336",
+  greenSwitch: "#31F03D",
+  barIcon: "#1F294E99",
+  borderColor: "#E5E5E5",
+  account_type_desc: "#11182799",
+  stepBg: "#D1EFF4",
+  create_project_title: "#07183599",
+  appBg: "#fafafa",
+};
+
+export const Theme = {
+  light: {
+    ...Colors,
+  },
+  dark: {
+    ...Colors,
+    background: "#121212",
+    surface: "#1E1E1E",
+    text: {
+      primary: "#FFFFFF",
+      secondary: "#A0A0A0",
+      light: "#666666",
+      inverse: "#1A2138",
+      social: "#FFFFFF",
+    },
+    border: "#333333",
+  },
+};

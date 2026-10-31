@@ -1,0 +1,391 @@
+diff --git a/node_modules/react-native-moyasar-sdk/src/localizations/i18n.ts b/node_modules/react-native-moyasar-sdk/src/localizations/i18n.ts
+index a5643a1..2661c00 100644
+--- a/node_modules/react-native-moyasar-sdk/src/localizations/i18n.ts
++++ b/node_modules/react-native-moyasar-sdk/src/localizations/i18n.ts
+@@ -50,9 +50,9 @@ const resources = {
+       cvc: 'رمز الأمان',
+       cardNumberRequired: 'رقم البطاقة مطلوب',
+       invalidCardNumber: 'رقم البطاقة غير صحيح',
+-      unsupportedCreditCardNetwork: 'نوع البطاقة الإئتمانية غير مدعوم',
+-      expiryRequired: 'تاريخ الإنتهاء مطلوب',
+-      invalidExpiry: 'تاريخ الإنتهاء غير صحيح',
++      unsupportedCreditCardNetwork: 'نوع البطاقة الائتمانية غير مدعوم',
++      expiryRequired: 'تاريخ الانتهاء مطلوب',
++      invalidExpiry: 'تاريخ الانتهاء غير صحيح',
+       expiredCard: 'البطاقة منتهية',
+       nameRequired: 'الاسم مطلوب',
+       bothNamesRequired: 'الاسم الأول والأخير مطلوبان',
+@@ -65,23 +65,28 @@ const resources = {
+       phoneNumberTitle: 'رقم الجوال',
+       phoneNumberRequired: 'رقم الجوال مطلوب',
+       phoneNumberInvalid: 'رقم الجوال يجب أن يبدأ بـ 05',
+-      phoneNumberInvalidCount: 'يجب أن يحتوي رقم الجوال على 10 أرقام فقط',
++      phoneNumberInvalidCount: 'يجب أن يحتوي رقم الجوال على 10 أرقام',
+       phoneNumberOnlyDigits: 'يجب أن يحتوي رقم الجوال على أرقام فقط',
+       phoneNumberNotRegisteredTitle: 'رقم الجوال غير مسجل',
+       phoneNumberNotRegisteredBody:
+-        'رقم الجوال المدخل غير مسجل لإستخدام stc pay',
++        'رقم الجوال المدخل غير مسجّل لاستخدام STC Pay',
+       otpTitle: 'رمز التحقق المؤقت',
+       otpRequired: 'رمز التحقق المؤقت مطلوب',
+       otpOnlyDigits: 'رمز التحقق المؤقت يجب أن يحتوي على أرقام فقط',
+-      otpInvalidCount: 'رمز التحقق المؤقت يجب أن يكون بين 4-10 أرقام فقط',
++      otpInvalidCount: 'رمز التحقق المؤقت يجب أن يكون بين 4 و 10 أرقام',
+       otpConfirm: 'تأكيد',
+     },
+   },
+ };
+ 
+-// App language is currently supported for new arch only, system language for the old arch
+-// TODO: Check 'https://www.npmjs.com/package/i18next-browser-languagedetector' when supporting web
++// Host can set globalThis.MOYASAR_LANG to "ar" | "en" without mutating host i18n.language
+ export function getCurrentLang(): string {
++  const override = (globalThis as { MOYASAR_LANG?: string }).MOYASAR_LANG;
++  if (override) {
++    const code = override.substring(0, 2).toLowerCase();
++    return code === 'ar' ? 'ar' : 'en';
++  }
++
+   let lang: string | null | undefined;
+ 
+   // iOS old arch
+@@ -118,8 +123,7 @@ export function getCurrentLang(): string {
+   return lang?.substring(0, 2) || 'en';
+ }
+ 
+-// TODO: Optimize and find a better way to handle localizations in an SDK + Make sure that localizations are ready before showing any view
+-export function getConfiguredLocalizations(): typeof i18n {
++function ensureMoyasarResourceBundles(): void {
+   if (i18n.isInitialized) {
+     if (!i18n.hasResourceBundle('en', 'moyasarTranslation')) {
+       i18n.addResourceBundle(
+@@ -135,17 +139,34 @@ export function getConfiguredLocalizations(): typeof i18n {
+         resources.ar.moyasarTranslation
+       );
+     }
+-  } else {
+-    i18n.use(initReactI18next).init({
+-      resources: resources,
+-      compatibilityJSON: 'v3',
+-      lng: getCurrentLang(),
+-      ns: 'moyasarTranslation',
+-      fallbackLng: ['en', 'ar'],
+-    });
++    return;
+   }
++  i18n.use(initReactI18next).init({
++    resources: resources,
++    compatibilityJSON: 'v3',
++    lng: getCurrentLang(),
++    ns: 'moyasarTranslation',
++    fallbackLng: ['en', 'ar'],
++  });
++}
+ 
+-  return i18n;
++/** Resolve a Moyasar key in the SDK language without changing the host app i18n.language. */
++export function moyasarTranslate(key: string, options?: any): string {
++  ensureMoyasarResourceBundles();
++  return i18n.t(key, { ...(options || {}), lng: getCurrentLang() });
++}
++
++export function getConfiguredLocalizations(): typeof i18n {
++  ensureMoyasarResourceBundles();
++  const lng = getCurrentLang();
++  const moyasarT = ((key: any, options?: any) =>
++    i18n.t(key, { ...(options || {}), lng })) as typeof i18n.t;
++  return new Proxy(i18n, {
++    get(target, prop, receiver) {
++      if (prop === 't') return moyasarT;
++      return Reflect.get(target, prop, receiver);
++    },
++  }) as typeof i18n;
+ }
+ 
+ export function isArabicLang(): boolean {
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/stc_pay_service.ts b/node_modules/react-native-moyasar-sdk/src/services/stc_pay_service.ts
+index 03ddd89..51596b8 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/stc_pay_service.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/stc_pay_service.ts
+@@ -78,8 +78,8 @@ export class StcPayService {
+         const { t } = getConfiguredLocalizations();
+ 
+         Alert.alert(
+-          t('phoneNumberNotRegisteredTitle'),
+-          t('phoneNumberNotRegisteredBody')
++          t('moyasarTranslation:phoneNumberNotRegisteredTitle'),
++          t('moyasarTranslation:phoneNumberNotRegisteredBody')
+         );
+       } else {
+         onPaymentResult(response);
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_cvc_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_cvc_validator.ts
+index 871a4b5..f449c0b 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_cvc_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_cvc_validator.ts
+@@ -8,16 +8,22 @@ export class CreditCardCvcValidator extends FieldValidator {
+     super();
+     const { t } = getConfiguredLocalizations();
+ 
+-    this.addRule(t('moyasarTranslation:cvcRequired'), (value: string) => {
+-      return value.length === 0;
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:cvcRequired'),
++      (value: string) => {
++        return value.length === 0;
++      }
++    );
+ 
+-    this.addRule(t('moyasarTranslation:onlyDigits'), (value: string) => {
+-      return !/^\d+$/.test(value);
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:onlyDigits'),
++      (value: string) => {
++        return !/^\d+$/.test(value);
++      }
++    );
+ 
+     this.addRule(
+-      t('moyasarTranslation:invalidCvc'),
++      () => t('moyasarTranslation:invalidCvc'),
+       (value: string, creditCardNumber: string | undefined) => {
+         const network = getCreditCardNetworkFromNumber(creditCardNumber ?? '');
+ 
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_expiry_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_expiry_validator.ts
+index 97a5842..734ff7d 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_expiry_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_expiry_validator.ts
+@@ -7,18 +7,27 @@ export class CreditCardExpiryValidator extends FieldValidator {
+     super();
+     const { t } = getConfiguredLocalizations();
+ 
+-    this.addRule(t('moyasarTranslation:expiryRequired'), (value: string) => {
+-      return value.length === 0;
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:expiryRequired'),
++      (value: string) => {
++        return value.length === 0;
++      }
++    );
+ 
+-    this.addRule(t('moyasarTranslation:invalidExpiry'), (value: string) => {
+-      const expiryDate = ExpiryDateUtil.fromPattern(value);
+-      return !(expiryDate?.isValid() ?? false);
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:invalidExpiry'),
++      (value: string) => {
++        const expiryDate = ExpiryDateUtil.fromPattern(value);
++        return !(expiryDate?.isValid() ?? false);
++      }
++    );
+ 
+-    this.addRule(t('moyasarTranslation:expiredCard'), (value: string) => {
+-      const expiryDate = ExpiryDateUtil.fromPattern(value);
+-      return expiryDate?.isExpired() ?? true;
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:expiredCard'),
++      (value: string) => {
++        const expiryDate = ExpiryDateUtil.fromPattern(value);
++        return expiryDate?.isExpired() ?? true;
++      }
++    );
+   }
+ }
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_name_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_name_validator.ts
+index 4cf2ec9..2d88f7c 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_name_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_name_validator.ts
+@@ -8,19 +8,22 @@ export class CreditCardNameValidator extends FieldValidator {
+     super();
+     const { t } = getConfiguredLocalizations();
+ 
+-    this.addRule(t('moyasarTranslation:nameRequired'), (value: string) => {
++    this.addRule(() => t('moyasarTranslation:nameRequired'), (value: string) => {
+       return value.length === 0;
+     });
+ 
+     this.addRule(
+-      t('moyasarTranslation:onlyEnglishAlphabets'),
++      () => t('moyasarTranslation:onlyEnglishAlphabets'),
+       (value: string) => {
+         return !this.latinRegex.test(value);
+       }
+     );
+ 
+-    this.addRule(t('moyasarTranslation:bothNamesRequired'), (value: string) => {
+-      return value.split(' ').filter((name) => name !== '').length < 2;
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:bothNamesRequired'),
++      (value: string) => {
++        return value.split(' ').filter((name) => name !== '').length < 2;
++      }
++    );
+   }
+ }
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_number_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_number_validator.ts
+index 9eb76d3..d30bebb 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_number_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/credit_card_number_validator.ts
+@@ -12,18 +12,21 @@ export class CreditCardNumberValidator extends FieldValidator {
+     const { t } = getConfiguredLocalizations();
+ 
+     this.addRule(
+-      t('moyasarTranslation:cardNumberRequired'),
++      () => t('moyasarTranslation:cardNumberRequired'),
+       (value: string) => {
+         return value.length === 0;
+       }
+     );
+ 
+-    this.addRule(t('moyasarTranslation:invalidCardNumber'), (value: string) => {
+-      return value.length < 15 || !isValidLuhn(value);
+-    });
++    this.addRule(
++      () => t('moyasarTranslation:invalidCardNumber'),
++      (value: string) => {
++        return value.length < 15 || !isValidLuhn(value);
++      }
++    );
+ 
+     this.addRule(
+-      t('moyasarTranslation:unsupportedCreditCardNetwork'),
++      () => t('moyasarTranslation:unsupportedCreditCardNetwork'),
+       (value: string, _?: string, supportedNetworks?: CreditCardNetwork[]) => {
+         const cardNetwork = getCreditCardNetworkFromNumber(value);
+ 
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/field_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/field_validator.ts
+index a05d49c..dc3a053 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/field_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/field_validator.ts
+@@ -6,16 +6,22 @@ type Predicate = (
+   supportedNetworks: CreditCardNetwork[] | undefined
+ ) => boolean;
+ 
++export type ValidationErrorMessage = string | (() => string);
++
+ interface ValidationRule {
+   predicate: Predicate;
+-  error: string;
++  error: ValidationErrorMessage;
+ }
+ 
+ export class FieldValidator {
+   private rules: ValidationRule[] = [];
+   private shouldErr: boolean = false;
+ 
+-  addRule(error: string, predicate: Predicate): void {
++  private resolveError(msg: ValidationErrorMessage): string {
++    return typeof msg === 'function' ? msg() : msg;
++  }
++
++  addRule(error: ValidationErrorMessage, predicate: Predicate): void {
+     this.rules.push({ predicate, error });
+   }
+ 
+@@ -55,7 +61,7 @@ export class FieldValidator {
+   ): string | null {
+     for (const rule of this.rules) {
+       if (rule.predicate(value, creditCardNumber, supportedNetworks)) {
+-        return rule.error;
++        return this.resolveError(rule.error);
+       }
+     }
+     return null;
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/otp_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/otp_validator.ts
+index 78ed4df..8a1382c 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/otp_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/otp_validator.ts
+@@ -1,23 +1,26 @@
+-import i18n from 'i18next';
++import { moyasarTranslate } from '../../localizations/i18n';
+ import { FieldValidator } from './field_validator';
+ 
+ export class OtpValidator extends FieldValidator {
+   constructor() {
+     super();
+ 
+-    this.addRule(i18n.t('moyasarTranslation:otpRequired'), (value: string) => {
+-      return value.length === 0;
+-    });
++    this.addRule(
++      () => moyasarTranslate('moyasarTranslation:otpRequired'),
++      (value: string) => {
++        return value.length === 0;
++      }
++    );
+ 
+     this.addRule(
+-      i18n.t('moyasarTranslation:otpOnlyDigits'),
++      () => moyasarTranslate('moyasarTranslation:otpOnlyDigits'),
+       (value: string) => {
+         return !/^\d+$/.test(value);
+       }
+     );
+ 
+     this.addRule(
+-      i18n.t('moyasarTranslation:otpInvalidCount'),
++      () => moyasarTranslate('moyasarTranslation:otpInvalidCount'),
+       (value: string) => {
+         return value.length < 4 || value.length > 10;
+       }
+diff --git a/node_modules/react-native-moyasar-sdk/src/services/validators/phone_number_validator.ts b/node_modules/react-native-moyasar-sdk/src/services/validators/phone_number_validator.ts
+index 2901f0b..801dbda 100644
+--- a/node_modules/react-native-moyasar-sdk/src/services/validators/phone_number_validator.ts
++++ b/node_modules/react-native-moyasar-sdk/src/services/validators/phone_number_validator.ts
+@@ -1,4 +1,4 @@
+-import i18n from 'i18next';
++import { moyasarTranslate } from '../../localizations/i18n';
+ import { FieldValidator } from './field_validator';
+ 
+ export class PhoneNumberValidator extends FieldValidator {
+@@ -6,28 +6,28 @@ export class PhoneNumberValidator extends FieldValidator {
+     super();
+ 
+     this.addRule(
+-      i18n.t('moyasarTranslation:phoneNumberRequired'),
++      () => moyasarTranslate('moyasarTranslation:phoneNumberRequired'),
+       (value: string) => {
+         return value.length === 0;
+       }
+     );
+ 
+     this.addRule(
+-      i18n.t('moyasarTranslation:phoneNumberOnlyDigits'),
++      () => moyasarTranslate('moyasarTranslation:phoneNumberOnlyDigits'),
+       (value: string) => {
+         return !/^\d+$/.test(value);
+       }
+     );
+ 
+     this.addRule(
+-      i18n.t('moyasarTranslation:phoneNumberInvalid'),
++      () => moyasarTranslate('moyasarTranslation:phoneNumberInvalid'),
+       (value: string) => {
+         return !/^05/.test(value);
+       }
+     );
+ 
+     this.addRule(
+-      i18n.t('moyasarTranslation:phoneNumberInvalidCount'),
++      () => moyasarTranslate('moyasarTranslation:phoneNumberInvalidCount'),
+       (value: string) => {
+         return value.length !== 10;
+       }
+diff --git a/node_modules/react-native-moyasar-sdk/src/views/credit_card.tsx b/node_modules/react-native-moyasar-sdk/src/views/credit_card.tsx
+index 432aeb2..ef6aab5 100644
+--- a/node_modules/react-native-moyasar-sdk/src/views/credit_card.tsx
++++ b/node_modules/react-native-moyasar-sdk/src/views/credit_card.tsx
+@@ -217,7 +217,7 @@ const CreditCardView = ({
+                     : 19
+                 }
+               />
+-              <View style={defaultStyle.cardNetworkLogoContainer}>
++              <View style={[defaultStyle.cardNetworkLogoContainer, { display: 'none' }]}>
+                 {paymentService.shouldShowNetworkLogo(
+                   number,
+                   CreditCardNetwork.mada,
